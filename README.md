@@ -54,9 +54,11 @@ Based on the tests we conducted, this crawler blows Scrapy and other alternative
 	  
 	  where,
 	  
-   | `--ListenAddress` | IP address of the Interface to listen on, for client connections.  Defaults to `127.0.0.1`                           |
-   | `--ListenPort`    | Port to listen on, for client connections. Defaults to `2345`                                                        |
-   | `--DialAddress`   | IP address of the interface to dial on, for crawling. Useful when using a VPN.  Default is to use OS defined routes. |
-   | `--LogPath`       | Creates separate log files for each submitted job, and some general logs.  Writes to stdout by default.              |
+  | Parameter         | Description                                                                                                          |
+  | ----------------- | -------------------------------------------------------------------------------------------------------------------- |
+  | `--ListenAddress` | IP address of the Interface to listen on, for client connections.  Defaults to `127.0.0.1`                           |
+  | `--ListenPort`    | Port to listen on, for client connections. Defaults to `2345`                                                        |
+  | `--DialAddress`   | IP address of the interface to dial on, for crawling. Useful when using a VPN.  Default is to use OS defined routes. |
+  | `--LogPath`       | Creates separate log files for each submitted job, and some general logs.  Writes to stdout by default.              |
 
   * Once the server is up and running,  you can try running one of the example programs from the `examples` directory,  and start writing your own programs based on the examples.
