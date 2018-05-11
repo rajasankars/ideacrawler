@@ -26,7 +26,6 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"io"
-	"io/ioutil"
 	"log"
 	"time"
 )
