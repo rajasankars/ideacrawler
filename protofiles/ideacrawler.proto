@@ -1,0 +1,183 @@
+/*************************************************************************
+ *
+ * Copyright 2018 Ideas2IT Technology Services Private Limited.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ***********************************************************************/
+
+syntax = "proto3";
+
+package protofiles;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
+service IdeaCrawler  {
+  rpc AddDomainAndListen(DomainOpt) returns (stream PageHTML) {}
+  rpc AddPages(stream PageRequest) returns (Status) {}
+  rpc CancelJob(Subscription) returns (Status)  {}
+}
+
+message Status {
+  bool success = 1;
+  string error = 2;
+}
+
+message KVP {
+  string key = 1;
+  string value = 2;
+}
+
+message DomainOpt {
+  string seedUrl = 1;
+  // crawl delay in seconds
+  int32  minDelay = 2;
+
+  int32  maxDelay = 3;
+
+  // don't follow any pages,  just send back responses for the received URLs.
+  bool   noFollow = 4;
+
+  // only pages matching reqUrlRegexp will be shipped back to the client.
+  // only matching pages will be saved to s3 as well.
+  string callbackUrlRegexp = 5;
+  // only pages matching followUrlRegexp will be followed and sublinks added to fetcher.
+  string followUrlRegexp = 6;
+
+  int32   maxConcurrentRequests = 7;
+
+  //TODO
+  string useragent = 8;
+  bool   impolite = 9;
+  //TODO
+  int32  depth = 10;
+  //TODO: maybe just remove all scheduling features, immediate jobs only
+  bool   repeat = 11;
+  
+  // needs min limit of 5mins, ideally 1hour
+  google.protobuf.Duration frequency = 12;
+
+  // time of first run, if this is saturday 10pm, frequency is 2 weeks. ideally atleast 10 mins away.
+  // it will continue to run at that time every 2 weeks
+  google.protobuf.Timestamp firstrun = 13;
+
+  // Callback check order -
+  //   (1) - callbackUrlRegexp
+  //   (2) - callbackXpathMatch
+  //   (3) - callbackXpathRegexp
+  //  Any one has to match.
+  // provide multiple xpaths as keys and expected values as value.  Pages are
+  // sent back to client only if all values are found in page.
+  repeated KVP callbackXpathMatch  = 14;
+
+  repeated KVP callbackXpathRegexp = 15;
+
+  //  in seconds, it is the time to wait for a new
+  // page, before stopping the job; affects workerIdleTTL of fetchbot.
+  // min value is 600, it is also default.
+  int32 maxIdleTime = 16;
+
+  bool followOtherDomains = 17;
+  repeated string keepDomains = 18;
+  repeated string dropDomains = 19;
+  bool domainDropPriority = 20;
+
+  // safe url normalizations happen by default. below is only for a few unsafe ones.
+  // for list of safe normalizations: https://github.com/PuerkitoBio/purell/blob/master/purell.go#L59
+  // remove index.php, etc,  fragments #section, +FlagsUsuallySafeGreedy from above link
+  bool unsafeNormalizeURL = 21;
+
+  bool login = 22;
+  // currently not possible, assumes false. uses chrome debugging protocol directly.
+  bool loginUsingSelenium = 23;
+  string loginUrl = 24;
+  // for username, password fields, other form data to send on post request
+  repeated KVP loginPayload = 25;
+  // if there are hidden fields in the page that need to be scraped before login
+  bool loginParseFields = 26;
+  // key is key of hidden fields to parse from form, value is the xpath of field to scrape.
+  repeated KVP loginParseXpath = 27;
+  // to check if login succeeded, provide xpath as key, and expected value as value.
+  // for example,  after login, xpath of top right corner,  and username as value.
+  // if the xpath is not there of if there is no value match,  then we probably didn't login.
+  KVP loginSuccessCheck = 28;
+
+  // checks login state after downloading each page, using check defined in 'loginSuccessCheck'
+  bool checkLoginAfterEachPage = 29;
+
+  // javascript for login in chrome browser.
+  string loginJS = 30;
+
+  // whether to use chrome, location of chrome binary
+  bool chrome = 31;
+  string chromeBinary = 32;
+  int32 domLoadTime = 33;
+  
+  // check if this network interface is still active before every request.
+  string networkIface = 34;
+
+  bool cancelOnDisconnect = 35;
+  // if true,  sends a HEAD request first ensure content is text/html before sending GET request.
+  bool checkContent = 36;
+
+  // if prefetch flag is true, downloads resources like img, css, png, svg, js associated with the actual page to mimic browser behaviour.
+  bool prefetch = 37;
+
+}
+
+//Subscription type
+enum SubType {
+  // crawler will remember sequence number of each page stored, so we can start back exactly where we left off
+  SEQNUM     = 0;
+  // if we know only the time when we left off,  or if we want to start reading from a certain day's run
+  DATETIME   = 1;
+}
+
+message Subscription {
+  string  subcode = 1;
+  string  domainname = 2;
+  SubType subtype = 3;
+  int32   seqnum  = 4;
+  google.protobuf.Timestamp datetime = 5;
+}
+
+enum PageReqType {
+  GET      = 0;
+  // Sends a HEAD request to first identify page is text/html before downloading
+  // If we are unsure link will send back large gzip file, etc. which we want to
+  // avoid.
+  HEAD     = 1;
+  BUILTINJS = 2;
+  JSCRIPT  = 3;
+}
+
+message PageRequest {
+  Subscription sub = 1;
+  PageReqType reqtype = 2;
+  string  url = 3;
+  string  js = 4;
+  bool noCallback = 5;   // works only for js requests
+
+  string  metaStr = 6;
+}
+
+message PageHTML {
+  bool   success = 1;
+  string error = 2;
+  Subscription sub = 3;
+  string url = 4;
+  int32  httpstatuscode = 5;
+  bytes content = 6;
+  string metaStr = 7;
+}
