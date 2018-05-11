@@ -41,18 +41,18 @@ Based on the tests we conducted, this crawler blows Scrapy and other alternative
 ### Server
   * Download the code using:
   
-  `go get -u github.com/ideas2it/ideacrawler`
+    `go get -u github.com/ideas2it/ideacrawler`
 	  
   * Build using:
   
-  `cd $GOPATH/src/github.com/ideas2it/ideacrawler && make install`
+    `cd $GOPATH/src/github.com/ideas2it/ideacrawler && make install`
 	  
   * This would install the server to `$GOPATH/bin/`.  Make sure this location is in your `PATH` environment variable.
   * Start the server with the below command:
   
-  `ideacrawler [--ListenAddress <listen_ip_address>] [--ListenPort <port>] [--DialAddress <dial_ip_address>] [--LogPath <log_dirname>]`
+    `ideacrawler [--ListenAddress <listen_ip_address>] [--ListenPort <port>] [--DialAddress <dial_ip_address>] [--LogPath <log_dirname>]`
 	  
-	  where,
+    where,
 	  
   | Parameter         | Description                                                                                                          |
   | ----------------- | -------------------------------------------------------------------------------------------------------------------- |
