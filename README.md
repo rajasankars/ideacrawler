@@ -1,10 +1,12 @@
 # IdeaCrawler
 
-IdeaCrawler is a blazing fast, highly effective, flexible client-server crawling framework written in Go. We built it to perform certain tasks better than existing crawlers do. In addition to the features you would expect from a regular crawling library, it makes it very easy to do things like scaling across machines, crawling through VPNs, using cookies, using Chrome as a crawling backend, etc.
+IdeaCrawler is a blazing fast, highly effective, flexible client-server crawling framework written in Go. We built it to perform certain tasks better than existing crawlers do. Based on the tests we conducted, this crawler outperforms Scrapy and other alternatives, many times over.  
 
-It was written to act as a layer on top of a regular crawling library, with a lot of glue code pre-written. This framework also allows users to isolate crawling to a dedicated cluster, while still being controlled from a central location.
+In addition to the features you would expect from a regular crawling library, it makes it very easy to do things like scaling across machines, crawling through VPNs, using cookies, using Chrome as a crawling backend, etc. It was written to act as a layer on top of a regular crawling library, with a lot of glue code pre-written. 
 
-Based on the tests we conducted, this crawler blows Scrapy and other alternatives out of the water. Oh, and did we mention it's super fast?
+This framework also allows users to isolate crawling to a dedicated cluster, while still being controlled from a central location. Oh, and did we mention it's super fast?
+
+<em>Footnote: IdeaCrawler is built by the engineering team at Ideas2IT. We've always believed in giving back to the open source community, and this crawler is a step in that direction.</em>
 
 ## Features
   * The server is written in Go.  We provide client libraries in Go and Python, but clients can be written in any language that Protobuf supports.
