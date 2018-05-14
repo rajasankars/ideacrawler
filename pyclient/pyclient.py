@@ -25,7 +25,7 @@ import time
 from Queue import Queue
 from threading import Thread
 
-sys.path.append(os.environ["GOPATH"] + "/src/protofiles/")
+sys.path.append(os.environ["GOPATH"] + "/src/github.com/ideas2it/ideacrawler/protofiles/")
 import ideacrawler_pb2
 import ideacrawler_pb2_grpc
 

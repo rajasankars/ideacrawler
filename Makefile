@@ -14,7 +14,7 @@ endif
 	protoc -I $(PWD)/ $(PWD)/protofiles/ideacrawler.proto --go_out=plugins=grpc:$(PWD)/
 
 protopy:
-	python -m grpc_tools.protoc -I $(PWD)/ --python_out=$(PWD)/ --grpc_python_out=$(PWD)/ $(PWD)/protofiles/ideacrawler.proto
+	python -m grpc_tools.protoc -I $(PWD)/protofiles --python_out=$(PWD)/protofiles --grpc_python_out=$(PWD)/protofiles $(PWD)/protofiles/ideacrawler.proto
 
 build:
 	mkdir -p build
