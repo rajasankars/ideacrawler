@@ -36,6 +36,7 @@ func main() {
 
 	// Follow SeedURL with given FollowUrlRegexp. Also we could define CallbackUrlRegexp.
 	z.Follow		= true
+	z.Depth                 = 1
 	z.FollowUrlRegexp	= ".*books.*page-.*html"
 	z.CallbackUrlRegexp	= ".*books.*catalogue.*index.*html"
 
