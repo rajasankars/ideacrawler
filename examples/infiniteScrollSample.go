@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"time"
 	"io/ioutil"
-	gc "ideacrawler/goclient"
+	gc "github.com/ideas2it/ideacrawler/goclient"
 )
 
 func main() {
@@ -30,7 +30,7 @@ func main() {
 	z := gc.NewCrawlJob("127.0.0.1", "2345")
 
 	// Enables callback through channel. Default is callback through function.
-	z.SetPageChan()
+	z.UsePageChan = true
 
 	// Remove fragments in the crawled urls.
 	z.UnsafeNormalizeURL	= false
