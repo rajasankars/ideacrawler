@@ -259,11 +259,7 @@ func (cj *CrawlJob) Run() {
 		cj.PageChan     = cj.implPageChan
 	}
 
-	if cj.UsePageChan {
-		if cj.implPageChan == nil {
-			log.Fatal("no callback channel found")
-		}
-	} else {
+	if !cj.UsePageChan {
 		if cj.Callback == nil {
 			log.Fatal("no callback function found")
 		}

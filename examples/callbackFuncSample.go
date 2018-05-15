@@ -30,8 +30,8 @@ func main() {
 	z := gc.NewCrawlJob("127.0.0.1", "2345")
 
 	z.Callback = func(ph *gc.PageHTML, cj *gc.CrawlJob)  {
-		fmt.Println(ph.Success, ph.Httpstatuscode, ph.Url, ph.MetaStr)
-		fmt.Println(string(ph.Content))
+		fmt.Println(ph.Success, ph.Httpstatuscode, ph.Url, ph.MetaStr, ph.UrlDepth)
+		// fmt.Println(string(ph.Content))
 		err := ioutil.WriteFile("/tmp/out.file", ph.Content, 0775)
 		if err != nil {
 			fmt.Println("Write failed:",err, "for url:", ph.Url)

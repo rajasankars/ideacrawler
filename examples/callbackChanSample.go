@@ -56,7 +56,7 @@ func main() {
 	go func() {
 		for {
 			ph := <-z.PageChan
-			fmt.Println(ph.Success, ph.Httpstatuscode, ph.Url, ph.MetaStr)
+			fmt.Println(ph.Success, ph.Httpstatuscode, ph.Url, ph.MetaStr, ph.UrlDepth)
 			// fmt.Println(string(ph.Content))
 			err := ioutil.WriteFile("/tmp/out.file", ph.Content, 0775)
 			if err != nil {

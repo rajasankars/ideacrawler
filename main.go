@@ -482,6 +482,7 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 			Httpstatuscode: HTTPSTATUS_FETCHBOT_ERROR,
 			Content:        []byte{},
 			MetaStr:        ctx.Cmd.(CrawlCommand).MetaStr(),
+			UrlDepth:       ctx.Cmd.(CrawlCommand).URLDepth(),
 		}
 		sendPageHTML(ctx, phtml)
 		return
@@ -506,6 +507,7 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 					Httpstatuscode: HTTPSTATUS_RESPONSE_ERROR,
 					Content:        []byte{},
 					MetaStr:        "",
+					UrlDepth:       ccmd.URLDepth(),
 				}
 				sendPageHTML(ctx, phtml)
 				return
@@ -529,6 +531,7 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 						Httpstatuscode: HTTPSTATUS_NOLONGER_LOGGED_IN,
 						Content:        []byte{},
 						MetaStr:        "",
+						UrlDepth:       ccmd.URLDepth(),
 					}
 					sendPageHTML(ctx, phtml)
 					job.cancelChan <- cancelSignal{}
@@ -558,6 +561,7 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 						Httpstatuscode: HTTPSTATUS_FOLLOW_PARSE_ERROR,
 						Content:        []byte{},
 						MetaStr:        "",
+						UrlDepth:       ccmd.URLDepth(),
 					}
 					sendPageHTML(ctx, phtml)
 					return
@@ -641,6 +645,7 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 				Httpstatuscode: int32(res.StatusCode),
 				Content:        pageBody,
 				MetaStr:        ccmd.MetaStr(),
+				UrlDepth:       ccmd.URLDepth(),
 			}
 			sendPageHTML(ctx, phtml)
 		}))
