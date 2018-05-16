@@ -36,6 +36,7 @@ func main() {
 
 	// Follow SeedURL with given FollowUrlRegexp. Also we could define CallbackUrlRegexp.
 	z.Follow		= true
+	z.Depth                 = 1
 	z.FollowUrlRegexp	= ".*books.*page-.*html"
 	z.CallbackUrlRegexp	= ".*books.*catalogue.*index.*html"
 
@@ -55,7 +56,7 @@ func main() {
 	go func() {
 		for {
 			ph := <-z.PageChan
-			fmt.Println(ph.Success, ph.Httpstatuscode, ph.Url, ph.MetaStr)
+			fmt.Println(ph.Success, ph.Httpstatuscode, ph.Url, ph.MetaStr, ph.UrlDepth)
 			// fmt.Println(string(ph.Content))
 			err := ioutil.WriteFile("/tmp/out.file", ph.Content, 0775)
 			if err != nil {
