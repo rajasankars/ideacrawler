@@ -16,7 +16,7 @@ endif
 protopy:
 	python -m grpc_tools.protoc -I $(PWD)/protofiles --python_out=$(PWD)/protofiles --grpc_python_out=$(PWD)/protofiles $(PWD)/protofiles/ideacrawler.proto
 
-build:
+build: clean
 	mkdir -p build
 	go build -o build/ideacrawler main.go
 

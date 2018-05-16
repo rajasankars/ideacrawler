@@ -89,7 +89,8 @@ func (cc *ChromeClient) Start() error {
 	err = cc.chromeCmd.Start()
 	time.Sleep(3 * time.Second) // TODO: make customizable. give a few seconds for browser to start.
 	if err != nil {
-		log.Panic("Unable to start chrome browser in path '" + cc.cpath + "'. Error - " + err.Error())
+		log.Println("Unable to start chrome browser in path '" + cc.cpath + "'. Error - " + err.Error())
+		return err
 	}
 
 	cc.devt = devtool.New("http://localhost:9222")
@@ -115,12 +116,14 @@ func (cc *ChromeClient) Start() error {
 		func() error { return cc.c.Page.Enable(cc.ctx) },
 		func() error { return cc.c.Runtime.Enable(cc.ctx) },
 	); err != nil {
-		log.Panic(err)
+		log.Println(err)
+		return err
 	}
 
 	cc.rspRcvd, err = cc.c.Network.ResponseReceived(cc.ctx)
 	if err != nil {
-		log.Panic(err)
+		log.Println(err)
+		return err
 	}
 	return err
 }

@@ -817,7 +817,11 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 		if job.opts.DomLoadTime > 0 {
 			cl.SetDomLoadTime(job.opts.DomLoadTime)
 		}
-		cl.Start()
+		err := cl.Start()
+		if err != nil {
+			job.log.Println("Unable to start chrome:", err)
+			return
+		}
 		defer cl.Stop()
 		urlobj, _ := url.Parse(job.opts.LoginUrl)
 		req := &http.Request{
@@ -905,7 +909,11 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 		if job.opts.DomLoadTime > 0 {
 			cl.SetDomLoadTime(job.opts.DomLoadTime)
 		}
-		cl.Start()
+		err := cl.Start()
+		if err != nil {
+			job.log.Println("Unable to start chrome:", err)
+			return
+		}
 		defer cl.Stop()
 		f.HttpClient = &IdeaCrawlDoer{cl, job, semaphore.NewWeighted(int64(job.opts.MaxConcurrentRequests)), s}
 	}
