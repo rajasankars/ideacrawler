@@ -180,4 +180,5 @@ message PageHTML {
   int32  httpstatuscode = 5;
   bytes content = 6;
   string metaStr = 7;
+  int32 urlDepth = 8;
 }

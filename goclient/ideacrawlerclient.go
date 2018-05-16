@@ -73,9 +73,10 @@ type CrawlJob struct {
 	addPagesClient pb.IdeaCrawler_AddPagesClient
 	sub            *pb.Subscription
 
-	Callback    func(*PageHTML, *CrawlJob)
-	UsePageChan bool
-	PageChan    chan *pb.PageHTML
+	Callback	 func(*PageHTML, *CrawlJob)
+	UsePageChan	 bool
+	PageChan	 <-chan *pb.PageHTML
+	implPageChan	 chan *pb.PageHTML
 }
 
 func NewCrawlJob(svrHost, svrPort string) *CrawlJob {
@@ -254,14 +255,21 @@ func (cj *CrawlJob) Run() {
 	defer close(phChan)
 
 	if cj.UsePageChan {
-		cj.PageChan = make(chan *pb.PageHTML, 100)
+		cj.implPageChan = make(chan *pb.PageHTML, 100)
+		cj.PageChan     = cj.implPageChan
+	}
+
+	if !cj.UsePageChan {
+		if cj.Callback == nil {
+			log.Fatal("no callback function found")
+		}
 	}
 
 	go func() {
 		time.Sleep(3 * time.Second) // This is to make sure callbacks don't start until Start() function exits.  Start sleep for 2 seconds.
 		if cj.UsePageChan {
 			for ph := range phChan {
-				cj.PageChan <- ph
+				cj.implPageChan <- ph
 			}
 		} else {
 			for ph := range phChan {

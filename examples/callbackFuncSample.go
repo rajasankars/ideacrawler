@@ -30,8 +30,8 @@ func main() {
 	z := gc.NewCrawlJob("127.0.0.1", "2345")
 
 	z.Callback = func(ph *gc.PageHTML, cj *gc.CrawlJob)  {
-		fmt.Println(ph.Success, ph.Httpstatuscode, ph.Url, ph.MetaStr)
-		fmt.Println(string(ph.Content))
+		fmt.Println(ph.Success, ph.Httpstatuscode, ph.Url, ph.MetaStr, ph.UrlDepth)
+		// fmt.Println(string(ph.Content))
 		err := ioutil.WriteFile("/tmp/out.file", ph.Content, 0775)
 		if err != nil {
 			fmt.Println("Write failed:",err, "for url:", ph.Url)
@@ -41,6 +41,7 @@ func main() {
 	z.SeedURL	= "http://books.toscrape.com/catalogue/page-1.html"
 	//  Follow SeedURL with given FollowUrlRegexp. Also we could define CallbackUrlRegexp.
 	z.Follow		= true
+	z.Depth                 = 1
 	z.FollowUrlRegexp	= ".*books.*page-.*html"
 	z.CallbackUrlRegexp	= ".*books.*catalogue.*index.*html"
 

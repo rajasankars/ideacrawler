@@ -146,6 +146,7 @@ type CrawlCommand struct {
 	url        *url.URL
 	noCallback bool
 	metaStr    string
+	urlDepth   int32
 }
 
 type IdeaCrawlDoer struct {
@@ -289,12 +290,13 @@ func (gc *IdeaCrawlDoer) Do(req *http.Request) (*http.Response, error) {
 	return resp, err
 }
 
-func CreateCommand(method, urlstr, metaStr string) (CrawlCommand, error) {
+func CreateCommand(method, urlstr, metaStr string, urlDepth int32) (CrawlCommand, error) {
 	parsed, err := url.Parse(urlstr)
 	return CrawlCommand{
 		method:  method,
 		url:     parsed,
 		metaStr: metaStr,
+		urlDepth: urlDepth,
 	}, err
 }
 
@@ -308,6 +310,10 @@ func (c CrawlCommand) Method() string {
 
 func (c CrawlCommand) MetaStr() string {
 	return c.metaStr
+}
+
+func (c CrawlCommand) URLDepth() int32 {
+	return c.urlDepth
 }
 
 func DomainNameFromURL(_url string) (string, error) { //returns domain name and error if any
@@ -476,6 +482,7 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 			Httpstatuscode: HTTPSTATUS_FETCHBOT_ERROR,
 			Content:        []byte{},
 			MetaStr:        ctx.Cmd.(CrawlCommand).MetaStr(),
+			UrlDepth:       ctx.Cmd.(CrawlCommand).URLDepth(),
 		}
 		sendPageHTML(ctx, phtml)
 		return
@@ -500,6 +507,7 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 					Httpstatuscode: HTTPSTATUS_RESPONSE_ERROR,
 					Content:        []byte{},
 					MetaStr:        "",
+					UrlDepth:       ccmd.URLDepth(),
 				}
 				sendPageHTML(ctx, phtml)
 				return
@@ -523,6 +531,7 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 						Httpstatuscode: HTTPSTATUS_NOLONGER_LOGGED_IN,
 						Content:        []byte{},
 						MetaStr:        "",
+						UrlDepth:       ccmd.URLDepth(),
 					}
 					sendPageHTML(ctx, phtml)
 					job.cancelChan <- cancelSignal{}
@@ -538,7 +547,7 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 			}
 
 			// Enqueue all links as HEAD requests, if they match followUrlRegexp
-			if job.opts.NoFollow == false && (job.followUrlRegexp == nil || job.followUrlRegexp.MatchString(ctx.Cmd.URL().String()) == true) {
+			if job.opts.NoFollow == false && (job.followUrlRegexp == nil || job.followUrlRegexp.MatchString(ctx.Cmd.URL().String()) == true) && ccmd.URLDepth() < job.opts.Depth {
 				// Process the body to find the links
 				doc, err := goquery.NewDocumentFromReader(strings.NewReader(string(pageBody)))
 				if err != nil {
@@ -552,11 +561,12 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 						Httpstatuscode: HTTPSTATUS_FOLLOW_PARSE_ERROR,
 						Content:        []byte{},
 						MetaStr:        "",
+						UrlDepth:       ccmd.URLDepth(),
 					}
 					sendPageHTML(ctx, phtml)
 					return
 				}
-				job.EnqueueLinks(ctx, doc)
+				job.EnqueueLinks(ctx, doc, ccmd.URLDepth() + 1)
 				job.log.Println("Enqueued", ctx.Cmd.URL().String())
 			}
 
@@ -635,6 +645,7 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 				Httpstatuscode: int32(res.StatusCode),
 				Content:        pageBody,
 				MetaStr:        ccmd.MetaStr(),
+				UrlDepth:       ccmd.URLDepth(),
 			}
 			sendPageHTML(ctx, phtml)
 		}))
@@ -643,7 +654,7 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 	// to crawl links from other hosts.
 	mux.Response().Method("HEAD").ContentType("text/html").Handler(fetchbot.HandlerFunc(
 		func(ctx *fetchbot.Context, res *http.Response, err error) {
-			cmd := CrawlCommand{"GET", ctx.Cmd.URL(), false, ctx.Cmd.(CrawlCommand).MetaStr()}
+			cmd := CrawlCommand{"GET", ctx.Cmd.URL(), false, ctx.Cmd.(CrawlCommand).MetaStr(), 0}
 			if err := ctx.Q.Send(cmd); err != nil {
 				job.log.Printf("ERR - %s %s - %s\n", ctx.Cmd.Method(), ctx.Cmd.URL(), err)
 			}
@@ -806,7 +817,11 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 		if job.opts.DomLoadTime > 0 {
 			cl.SetDomLoadTime(job.opts.DomLoadTime)
 		}
-		cl.Start()
+		err := cl.Start()
+		if err != nil {
+			job.log.Println("Unable to start chrome:", err)
+			return
+		}
 		defer cl.Stop()
 		urlobj, _ := url.Parse(job.opts.LoginUrl)
 		req := &http.Request{
@@ -894,7 +909,11 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 		if job.opts.DomLoadTime > 0 {
 			cl.SetDomLoadTime(job.opts.DomLoadTime)
 		}
-		cl.Start()
+		err := cl.Start()
+		if err != nil {
+			job.log.Println("Unable to start chrome:", err)
+			return
+		}
 		defer cl.Stop()
 		f.HttpClient = &IdeaCrawlDoer{cl, job, semaphore.NewWeighted(int64(job.opts.MaxConcurrentRequests)), s}
 	}
@@ -938,7 +957,7 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 				switch pr.Reqtype {
 				case pb.PageReqType_GET:
 					// TODO:  add error checking for error from Send functions
-					cmd, err := CreateCommand("GET", pr.Url, pr.MetaStr)
+					cmd, err := CreateCommand("GET", pr.Url, pr.MetaStr, 0)
 					if err != nil {
 						job.log.Println(err)
 						return
@@ -949,7 +968,7 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 						return
 					}
 				case pb.PageReqType_HEAD:
-					cmd, err := CreateCommand("HEAD", pr.Url, pr.MetaStr)
+					cmd, err := CreateCommand("HEAD", pr.Url, pr.MetaStr, 0)
 					if err != nil {
 						job.log.Println(err)
 						return
@@ -975,6 +994,7 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 						},
 						noCallback: pr.NoCallback,
 						metaStr:    pr.MetaStr,
+						urlDepth: 0,
 					}
 					err = q.Send(cmd)
 					if err != nil {
@@ -997,6 +1017,7 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 						},
 						noCallback: pr.NoCallback,
 						metaStr:    pr.MetaStr,
+						urlDepth: 0,
 					}
 					err = q.Send(cmd)
 					if err != nil {
@@ -1012,7 +1033,7 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 	}()
 	if len(job.opts.SeedUrl) > 0 {
 		job.duplicates[job.opts.SeedUrl] = true
-		cmd, err := CreateCommand("GET", job.opts.SeedUrl, "")
+		cmd, err := CreateCommand("GET", job.opts.SeedUrl, "", 0)
 		if err != nil {
 			job.log.Println(err)
 			return
@@ -1135,7 +1156,7 @@ func (s *ideaCrawlerServer) AddDomainAndListen(opts *pb.DomainOpt, ostream pb.Id
 	return nil
 }
 
-func (job *Job) EnqueueLinks(ctx *fetchbot.Context, doc *goquery.Document) {
+func (job *Job) EnqueueLinks(ctx *fetchbot.Context, doc *goquery.Document, urlDepth int32) {
 	job.mu.Lock()
 	defer job.mu.Unlock()
 	var SendMethod = "GET"
@@ -1172,7 +1193,7 @@ func (job *Job) EnqueueLinks(ctx *fetchbot.Context, doc *goquery.Document) {
 				job.duplicates[nurl] = true
 				return
 			}
-			cmd, err := CreateCommand(SendMethod, nurl, "")
+			cmd, err := CreateCommand(SendMethod, nurl, "", urlDepth)
 			if err != nil {
 				job.log.Println(err)
 				return
