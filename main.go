@@ -547,7 +547,7 @@ func (s *ideaCrawlerServer) RunJob(subId string, job *Job) {
 			}
 
 			// Enqueue all links as HEAD requests, if they match followUrlRegexp
-			if job.opts.NoFollow == false && (job.followUrlRegexp == nil || job.followUrlRegexp.MatchString(ctx.Cmd.URL().String()) == true) && ccmd.URLDepth() < job.opts.Depth {
+			if job.opts.NoFollow == false && (job.followUrlRegexp == nil || job.followUrlRegexp.MatchString(ctx.Cmd.URL().String()) == true) && (job.opts.Depth < 0 || ccmd.URLDepth() < job.opts.Depth) {
 				// Process the body to find the links
 				doc, err := goquery.NewDocumentFromReader(strings.NewReader(string(pageBody)))
 				if err != nil {
