@@ -91,6 +91,7 @@ class CrawlJob():
         self.minDelay              = 5
         self.maxDelay              = 0
         self.follow             = True
+        self.depth              = -1
         self.callbackUrlRegexp  = ""
         self.followUrlRegexp    = ""
         self.callbackXpathMatch = []
@@ -161,6 +162,7 @@ class CrawlJob():
                                               minDelay=self.minDelay,
                                               maxDelay=self.maxDelay,
                                               noFollow = not self.follow,
+                                              depth = self.depth,
                                               followUrlRegexp=self.followUrlRegexp,
                                               callbackUrlRegexp=self.callbackUrlRegexp,
                                               callbackXpathMatch=self.callbackXpathMatch,

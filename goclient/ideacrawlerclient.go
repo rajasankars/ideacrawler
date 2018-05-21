@@ -84,6 +84,7 @@ func NewCrawlJob(svrHost, svrPort string) *CrawlJob {
 
 	cj.MinDelay = 5
 	cj.Follow = true
+	cj.Depth = -1
 	cj.DomLoadTime = 5
 	cj.Useragent = "Fetchbot"
 	cj.MaxConcurrentRequests = 5
