@@ -29,8 +29,8 @@ func main() {
 
 	z := gc.NewCrawlJob("127.0.0.1", "2345")
 
-	// Sends  through channel. Default is callback through function.
-	z.UsePageChan = true
+	// Sends through channel. Default is callback through function.
+	z.SetPageChan(gc.NewPageChan())
 
 	z.SeedURL	= "http://books.toscrape.com/catalogue/page-1.html"
 
