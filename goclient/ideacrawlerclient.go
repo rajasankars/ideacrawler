@@ -216,8 +216,8 @@ func (cj *CrawlJob) Run() {
 
 	if cj.usePageChan && cj.Callback != nil {
 		log.Fatal("Callback channel and function both can't be used at the same time")
-	} else if cj.Callback == nil {
-		log.Fatal("no callback function found")
+	} else if cj.Callback == nil && cj.usePageChan == false {
+		log.Fatal("Please set pageChan to get callbacks on,  or provide a callback function")
 	}
 
 	var opts []grpc.DialOption
