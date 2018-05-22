@@ -28,6 +28,7 @@ import (
 	"io"
 	"log"
 	"time"
+	"errors"
 )
 
 type PageHTML = pb.PageHTML
@@ -74,7 +75,7 @@ type CrawlJob struct {
 	sub            *pb.Subscription
 
 	Callback	 func(*PageHTML, *CrawlJob)
-	UsePageChan	 bool
+	usePageChan	 bool
 	PageChan	 <-chan *pb.PageHTML
 	implPageChan	 chan *pb.PageHTML
 }
@@ -141,7 +142,18 @@ func (cj *CrawlJob) SetCallbackXpathRegexp(mdata KVMap) {
 	}
 }
 
+func (cj *CrawlJob) SetPageChan(pageChan chan *pb.PageHTML) {
+	cj.usePageChan  = true
+	cj.implPageChan = pageChan
+	cj.PageChan     = cj.implPageChan
+}
+
 func (cj *CrawlJob) AddPage(url, metaStr string) error {
+	if cj.IsAlive() == false {
+		errorMsg := "AddPage function can't be called when crawl job is not running. Please start crawl job first then call Addpage."
+		log.Println(errorMsg)
+		return errors.New(errorMsg)
+	}
 	if cj.addPagesClient == nil {
 		var err error
 		cj.addPagesClient, err = cj.client.AddPages(context.Background())
@@ -159,6 +171,11 @@ func (cj *CrawlJob) AddPage(url, metaStr string) error {
 }
 
 func (cj *CrawlJob) AddJS(typ pb.PageReqType, url, js, metaStr string) error {
+	if cj.IsAlive() == false {
+		errorMsg := "AddJS function can't be called when crawl job is not running. Please start crawl job first then call AddJS."
+		log.Println(errorMsg)
+		return errors.New(errorMsg)
+	}
 	if cj.addPagesClient == nil {
 		var err error
 		cj.addPagesClient, err = cj.client.AddPages(context.Background())
@@ -196,6 +213,13 @@ func (cj *CrawlJob) Run() {
 	defer func() {
 		cj.running = false
 	}()
+
+	if cj.usePageChan && cj.Callback != nil {
+		log.Fatal("Callback channel and function both can't be used at the same time")
+	} else if cj.Callback == nil {
+		log.Fatal("no callback function found")
+	}
+
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
 	conn, err := grpc.Dial(cj.svrHost+":"+cj.svrPort, opts...)
@@ -255,20 +279,9 @@ func (cj *CrawlJob) Run() {
 	phChan := make(chan *pb.PageHTML, 1000)
 	defer close(phChan)
 
-	if cj.UsePageChan {
-		cj.implPageChan = make(chan *pb.PageHTML, 100)
-		cj.PageChan     = cj.implPageChan
-	}
-
-	if !cj.UsePageChan {
-		if cj.Callback == nil {
-			log.Fatal("no callback function found")
-		}
-	}
-
 	go func() {
 		time.Sleep(3 * time.Second) // This is to make sure callbacks don't start until Start() function exits.  Start sleep for 2 seconds.
-		if cj.UsePageChan {
+		if cj.usePageChan {
 			for ph := range phChan {
 				cj.implPageChan <- ph
 			}
@@ -290,4 +303,8 @@ func (cj *CrawlJob) Run() {
 		}
 		phChan <- page
 	}
+}
+
+func NewPageChan() chan *pb.PageHTML {
+	return make(chan *pb.PageHTML, 100)
 }
